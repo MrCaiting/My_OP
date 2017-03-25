@@ -27,5 +27,34 @@ int32_t file_write(int32_t fd, void8 buf, int32_t nbytes){
 }
 
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
+  int32_t data_length;
+  int32_t data_need_read;
+  int32_t data_bl_start;
+  int32_t index = 0;
+  uint32_t current_block;
 
+
+  data_length = (first_inode + inode)->inode_len;
+  data_length -= offset;      // Include the offset and get the actual length of data
+
+  // If there is no data to be read (EOF has been reached)
+  if (data_length <= 0){
+    return 0;
+  }
+
+  // If the inode value is invalid or the buffer is not ready
+  if (inode > bootpoint->num_inodes || !buf){
+    return -1;
+  }
+
+  if (data_length < length)   // If the length of the data remain is smaller than the requested length
+    data_need_read = data_length;   // we only read the available length
+  }
+  else{
+    data_need_read = length;
+  }
+
+  while (data_need_read > 0){
+    buf[index]
+  }
 }
