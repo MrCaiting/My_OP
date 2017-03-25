@@ -1,6 +1,7 @@
 #include "file_system.h"
 
 static boot_block_t* bootpoint;
+static dentry_block_t* dentry;
 static inode_t* first_inode;
 static data_block_t* data;
 
@@ -16,6 +17,10 @@ void init_file_system (uint32_t address){
 
 
 int32_t file_open(const uint8_t* filename){
+  return 0;
+}
+
+int32_t file_close(const uint8_t* filename){
   return 0;
 }
 
@@ -89,4 +94,73 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 
 int32_t file_read(int32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
   return read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+}
+
+
+int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
+  int32_t dentry_number;
+  int32_t name_count;
+  int32_t index;
+  int32_t return_val;
+  dentry_t temp;
+
+  // Get the total number of directories
+  dentry_number =  bootpoint->num_directory_entires;
+  name_count = strlen((int8_t*) fname);
+
+  // Check if the file name is too long or just an invalid name
+  if (name_count > NAME_SIZE || name_count < 1){
+    printf("Invalid File Name!\n");
+    return -1;
+  }
+
+  // Iterate and check if the file name exists
+  for (index = 0; index < dentry_number; index++){
+    return_val = read_dentry_by_index(index, &temp);
+    if (strncmp((int8_t*)fname, (int8_t*)temp.file_name, NAME_SIZE) == 0){
+      *dentry = temp;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
+  int32_t num_of_dentry;
+
+  num_of_dentry = boot_block_t->num_directory_entires;
+  if (index >= num_of_dentry || !dentry){
+    return -1;
+  }
+
+  strcpy((int8_t*)(dentry->file_name), (int8_t*) (bootpoint->directory_entries[index].file_name));
+  dentry->file_type = bootpoint->directory_entries[index].file_type;
+  dentry->inode_numhber = bootpoint->directory_entries[index].inode_numhber;
+
+  return 0;
+}
+
+int32_t directory_read(int32_t fd, void* buf, int32_t nbytes){
+  dentry_t dentry;
+  uint32_t length;
+  if (read_dentry_by_index(fd, &dentry) == 0){
+    strncpy((int8_t*)buf, (int8_t*)dentry.file_name, NAME_SIZE);
+    length = strlen((int8_t*)dentry.filename);
+    return length;
+  }
+  else{
+    return 0;
+  }
+}
+
+int32_t directory_open(void){
+  return 0;
+}
+
+int32_t directory_write(void){
+  return -1;
+}
+
+int32_t directory_close(void){
+  return 0;
 }
