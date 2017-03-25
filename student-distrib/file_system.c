@@ -27,18 +27,19 @@ int32_t file_write(int32_t fd, void8 buf, int32_t nbytes){
 }
 
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
-  int32_t n;
+  int32_t copy_length;
   int32_t data_length;
   int32_t data_copied;
   int32_t data_need_read;
-  int32_t data_bl_start;
-  int32_t index = 0;
-  uint32_t current_block;
+  int32_t data_remaining;
+  int32_t data_block_start;
+  uint32_t block_pos;
+  uint32_t data_addr;
   inode_t* inode_copy;
   uint8_t* byte_copy;
 
   inode_copy = (first_inode + inode);
-  data_length = (first_inode + inode)->inode_len;
+  data_length = inode_copy->inode_len;
   data_length -= offset;      // Include the offset and get the actual length of data
 
   // If there is no data to be read (EOF has been reached)
@@ -58,13 +59,23 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     data_need_read = length;
   }
 
+  // Set a counter to count how many have been copied
   data_copied = 0;
+
   while (data_need_read > 0){
-    current_block = offset / DATA_B_SIZE;
+    // Get the current block index
+    block_pos = offset / DATA_B_SIZE;
+    data_addr = inode_copy->in_d_block_num[current_block];
 
-    byte_copy = (uint8_t*) &data[inode_copy->in_d_block_num[current_block]] + (offset % DATA_B_SIZE);
+    // We get to the exact location of data that we want to copy
+    byte_copy = (uint8_t*) &data[data_addr] + (offset % DATA_B_SIZE);
 
-    n = (length > 4096 - (offset % 4096))?(4096 - (offset % 4096))):length;
+    data_remaining =  DATA_B_SIZE - (offset % DATA_B_SIZE);
+
+    /* If there are more bytes exist in the block
+     *  than how many we want to copy, just copy all of the rest
+     */
+    copy_length = (data_need_read > data_remaining)?data_remaining:data_need_read;
     memcpy(buf, byte_copy, n);
 
     data_need_read -= n;
@@ -74,4 +85,8 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     }
     return data_copied;
   }
+}
+
+int32_t file_read(int32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
+  return read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 }

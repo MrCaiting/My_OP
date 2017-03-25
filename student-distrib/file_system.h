@@ -14,3 +14,5 @@ typedef struct boot_block{
   uint8_t  reserved[BOOTBLOCK_RESERVED];
   dentry_block_t directory_entries[DIRECTORY_ENT];
 }boot_block_t;
+
+#endif
